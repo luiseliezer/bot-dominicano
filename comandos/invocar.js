@@ -48,3 +48,4 @@ module.exports = async (sock, msg, from, senderId, args) => {
         mentions: allMentions
     });
 };
+
