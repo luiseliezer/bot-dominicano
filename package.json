@@ -1,0 +1,13 @@
+{
+  "name": "bot-dominicano",
+  "version": "1.0.0",
+  "main": "bot_dominicano.js",
+  "scripts": {
+    "start": "node bot_dominicano.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.0",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
+  }
+}
