@@ -46,11 +46,23 @@ async function connectBot() {
         if (!msg.message || !msg.key.remoteJid) return;
 
         const from = msg.key.remoteJid;
-        const senderId = msg.key.fromMe
-            ? sock.user.id
-            : msg.key.participant || msg.key.remoteJid;
+        
+        // CORRECCIÓN: Mejor detección del senderId
+        let senderId;
+        if (msg.key.fromMe) {
+            // Si el mensaje viene de tu cuenta (el bot), entonces tú eres el sender
+            senderId = '18099297296@s.whatsapp.net'; // Tu número
+        } else {
+            // Si no viene de tu cuenta, entonces es otra persona
+            senderId = msg.key.participant || msg.key.remoteJid;
+        }
 
-        console.log('👤 senderId detectado:', senderId);
+        // Debugging mejorado
+        console.log('🔍 Debug info:');
+        console.log('  - fromMe:', msg.key.fromMe);
+        console.log('  - participant:', msg.key.participant);
+        console.log('  - remoteJid:', msg.key.remoteJid);
+        console.log('  - senderId final:', senderId);
 
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
         if (!text.startsWith('.')) return;
@@ -60,12 +72,17 @@ async function connectBot() {
 
         // Comando especial: .activar
         if (accion === 'activar') {
-            const admin = '18495132638@s.whatsapp.net'; // ← tu número real aquí
+            const admin = '18099297296@s.whatsapp.net'; // Tu número real aquí
 
+            console.log(`🔐 Verificando permisos: ${senderId} === ${admin} ?`);
+            
             if (senderId !== admin) {
                 await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede activar comandos 🔒' });
+                console.log('❌ Acceso denegado - no es el admin');
                 return;
             }
+
+            console.log('✅ Acceso concedido - es el admin');
 
             if (!args[0]) {
                 await sock.sendMessage(from, { text: '❗ Escribe el comando a activar. Ej: .activar play' });
@@ -76,7 +93,7 @@ async function connectBot() {
 
             await sock.sendMessage(from, {
                 text: ok
-                    ? `✅ Comando .${args[0]} activado pa’ to’ el mundo`
+                    ? `✅ Comando .${args[0]} activado pa' to' el mundo`
                     : `❌ No encontré el comando .${args[0]}`
             });
             return;
@@ -84,12 +101,17 @@ async function connectBot() {
 
         // Comando especial: .desactivar
         if (accion === 'desactivar') {
-            const admin = '18495132638@s.whatsapp.net'; // ← también aquí
+            const admin = '18099297296@s.whatsapp.net'; // También aquí
+
+            console.log(`🔐 Verificando permisos: ${senderId} === ${admin} ?`);
 
             if (senderId !== admin) {
                 await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede desactivar comandos 🔒' });
+                console.log('❌ Acceso denegado - no es el admin');
                 return;
             }
+
+            console.log('✅ Acceso concedido - es el admin');
 
             if (!args[0]) {
                 await sock.sendMessage(from, { text: '❗ Escribe el comando a desactivar. Ej: .desactivar play' });
@@ -110,7 +132,7 @@ async function connectBot() {
         if (comandos[accion]) {
             const acceso = config.verificarAcceso(accion, from);
             if (!acceso) {
-                await sock.sendMessage(from, { text: '🚫 Ese comando no ta’ disponible pa’ ti, manín.' });
+                await sock.sendMessage(from, { text: '🚫 Ese comando no ta' disponible pa' ti, manín.' });
                 return;
             }
 
@@ -126,4 +148,3 @@ async function connectBot() {
 }
 
 connectBot();
-
