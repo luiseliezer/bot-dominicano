@@ -1,3 +1,6 @@
+
+
+
 const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const { readdirSync } = require('fs');
 const path = require('path');
@@ -12,7 +15,7 @@ async function connectBot() {
     const sock = makeWASocket({
         version,
         logger: P({ level: 'silent' }),
-        printQRInTerminal: true, // Puedes quitar esta línea si quieres evitar el warning
+        printQRInTerminal: true,
         auth: state
     });
 
@@ -47,8 +50,11 @@ async function connectBot() {
 
         const from = msg.key.remoteJid;
         const senderId = msg.key.participant || msg.key.remoteJid;
-        const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
 
+        // Log para ver el número del remitente
+        console.log('🔍 senderId detectado:', senderId);
+
+        const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
         if (!text.startsWith('.')) return;
 
         const [comando, ...args] = text.trim().split(' ');
@@ -56,7 +62,7 @@ async function connectBot() {
 
         // Comando especial: .activar
         if (accion === 'activar') {
-            const admin = '18294662330@s.whatsapp.net';
+            const admin = '18099297296@lid'; // ← cambia esto por tu senderId real si es distinto
 
             if (senderId !== admin) {
                 await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede activar comandos 🔒' });
@@ -80,7 +86,7 @@ async function connectBot() {
 
         // Comando especial: .desactivar
         if (accion === 'desactivar') {
-            const admin = '18294662330@s.whatsapp.net';
+            const admin = '18099297296@lid'; // ← también aquí
 
             if (senderId !== admin) {
                 await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede desactivar comandos 🔒' });
@@ -122,5 +128,3 @@ async function connectBot() {
 }
 
 connectBot();
-
-
