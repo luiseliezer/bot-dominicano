@@ -62,7 +62,7 @@ async function connectBot() {
 
         // Comando especial: .activar
         if (accion === 'activar') {
-            const admin = '18495132638@lid'; // ← cambia esto por tu senderId real si es distinto
+            const admin = '18099297296@lid'; // ← cambia esto por tu senderId real si es distinto
 
             if (senderId !== admin) {
                 await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede activar comandos 🔒' });
@@ -86,7 +86,7 @@ async function connectBot() {
 
         // Comando especial: .desactivar
         if (accion === 'desactivar') {
-            const admin = '18495132638@lid'; // ← también aquí
+            const admin = '18099297296@lid'; // ← también aquí
 
             if (senderId !== admin) {
                 await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede desactivar comandos 🔒' });
