@@ -9,38 +9,37 @@ module.exports = async function (sock, m, from, senderId, args) {
     const query = args.join(' ');
     if (!query) {
       return sock.sendMessage(from, {
-        text: '📥 Escribe el nombre de la canción o pega un link de YouTube.\nEj: `.play mi gente` o `.play https://youtu.be/...`',
+        text: '📥 Escribe el nombre de la canción o pega un link de YouTube.\nEj: `.play me porto bonito` o `.play https://youtu.be/...`',
       }, { quoted: m });
     }
 
+    let videoUrl;
     let videoInfo;
 
+    // Validar si es un link directo
     if (playdl.yt_validate(query) === 'video') {
-      // Es un link directo
-      videoInfo = await playdl.video_info(query);
+      videoUrl = query;
+      videoInfo = await playdl.video_info(videoUrl);
     } else {
-      // Búsqueda por nombre
+      // Buscar por nombre
       const search = await playdl.search(query, { limit: 1 });
       if (!search.length || !search[0].url) {
         return sock.sendMessage(from, {
           text: '❌ No encontré ese tema, manito. Prueba con otro 🎶',
         }, { quoted: m });
       }
-      videoInfo = await playdl.video_info(search[0].url);
+      videoUrl = search[0].url;
+      videoInfo = await playdl.video_info(videoUrl);
     }
 
-    // Validar estructura
-    if (
-      !videoInfo ||
-      !videoInfo.video_details ||
-      !videoInfo.video_details.url
-    ) {
+    // Validación final
+    if (!videoUrl || !videoInfo.video_details) {
       return sock.sendMessage(from, {
         text: '⚠️ No pude obtener el link del video. Intenta con otro nombre o link válido.',
       }, { quoted: m });
     }
 
-    const stream = await playdl.stream(videoInfo.video_details.url, { quality: 1 });
+    const stream = await playdl.stream(videoUrl, { quality: 1 });
     const filePath = path.join(os.tmpdir(), `${videoInfo.video_details.id}.webm`);
 
     // Preview antes de enviar
@@ -74,6 +73,9 @@ module.exports = async function (sock, m, from, senderId, args) {
     await sock.sendMessage(from, {
       text: '❌ Fallé descargando la música. Tira otro nombre y probamos otra vez 🔁',
     }, { quoted: m });
+  }
+};
+
   }
 };
 
