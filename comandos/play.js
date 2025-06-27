@@ -16,12 +16,10 @@ module.exports = async function (sock, m, from, senderId, args) {
     let videoUrl;
     let videoInfo;
 
-    // Validar si es un link directo
     if (playdl.yt_validate(query) === 'video') {
       videoUrl = query;
       videoInfo = await playdl.video_info(videoUrl);
     } else {
-      // Buscar por nombre
       const search = await playdl.search(query, { limit: 1 });
       if (!search.length || !search[0].url) {
         return sock.sendMessage(from, {
@@ -32,22 +30,20 @@ module.exports = async function (sock, m, from, senderId, args) {
       videoInfo = await playdl.video_info(videoUrl);
     }
 
-    // Validación final
-    if (!videoUrl || !videoInfo.video_details) {
+    if (!videoInfo || !videoInfo.video_details || !videoUrl) {
       return sock.sendMessage(from, {
         text: '⚠️ No pude obtener el link del video. Intenta con otro nombre o link válido.',
       }, { quoted: m });
     }
 
-    const stream = await playdl.stream(videoUrl, { quality: 1 });
+    const { stream } = await playdl.stream_from_info(videoInfo);
     const filePath = path.join(os.tmpdir(), `${videoInfo.video_details.id}.webm`);
 
-    // Preview antes de enviar
     await sock.sendMessage(from, {
       text: `🎧 *Reproduciendo:* ${videoInfo.video_details.title}\n⏱️ Duración: ${videoInfo.video_details.durationRaw}`,
     }, { quoted: m });
 
-    ffmpeg(stream.stream)
+    ffmpeg(stream)
       .audioCodec('libvorbis')
       .noVideo()
       .format('webm')
@@ -76,8 +72,6 @@ module.exports = async function (sock, m, from, senderId, args) {
   }
 };
 
-  }
-};
 
 
 
