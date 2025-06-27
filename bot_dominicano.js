@@ -32,7 +32,10 @@ async function connectBot() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    // Cargar comandos desde la carpeta
+    // Activar saludos y despedidas 🔥
+    require('./eventos/participantes')(sock);
+
+    // Cargar comandos automáticamente desde /comandos
     const comandos = {};
     const comandosDir = path.join(__dirname, 'comandos');
     readdirSync(comandosDir).forEach(file => {
@@ -127,4 +130,5 @@ async function connectBot() {
 }
 
 connectBot();
+
 
