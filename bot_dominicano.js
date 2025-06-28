@@ -5,7 +5,7 @@ const P = require('pino');
 const qrcode = require('qrcode-terminal');
 const config = require('./config/config');
 
-// ✅ Lista de administradores autorizados
+// ✅ Lista de administradores
 const ADMINS = [
     '18294328201@s.whatsapp.net'
 ];
@@ -55,9 +55,9 @@ async function connectBot() {
 
         console.log('👤 senderId real:', senderId);
 
-        // 🔒 Ignorar mensajes de IDs no válidos (como @lid)
+        // ⛔ Filtrar sesiones inválidas
         if (!senderId.endsWith('@s.whatsapp.net') && !senderId.endsWith('@g.us')) {
-            console.log(`⚠️ Ignorado por sesión inválida: ${senderId}`);
+            console.warn(`⛔ Sesión rechazada: ${senderId}`);
             return;
         }
 
@@ -67,7 +67,7 @@ async function connectBot() {
         const [comando, ...args] = text.trim().split(' ');
         const accion = comando.slice(1).toLowerCase();
 
-        // 🔐 .activar comando
+        // 🔐 Activar comando
         if (accion === 'activar') {
             if (!ADMINS.includes(senderId)) {
                 await sock.sendMessage(from, { text: '🚫 Solo los dueños del bot pueden activar comandos 🔒' });
@@ -80,7 +80,6 @@ async function connectBot() {
             }
 
             const ok = config.activarComando(args[0].toLowerCase());
-
             await sock.sendMessage(from, {
                 text: ok
                     ? `✅ Comando .${args[0]} activado pa’ to’ el mundo`
@@ -89,7 +88,7 @@ async function connectBot() {
             return;
         }
 
-        // 🔐 .desactivar comando
+        // 🔐 Desactivar comando
         if (accion === 'desactivar') {
             if (!ADMINS.includes(senderId)) {
                 await sock.sendMessage(from, { text: '🚫 Solo los dueños del bot pueden desactivar comandos 🔒' });
@@ -102,7 +101,6 @@ async function connectBot() {
             }
 
             const ok = config.desactivarComando(args[0].toLowerCase());
-
             await sock.sendMessage(from, {
                 text: ok
                     ? `🛑 Comando .${args[0]} desactivado correctamente`
@@ -111,7 +109,7 @@ async function connectBot() {
             return;
         }
 
-        // 🧠 Comandos normales con acceso validado
+        // ▶️ Ejecutar comando si está activo y accesible
         if (comandos[accion]) {
             const acceso = config.verificarAcceso(accion, from);
             if (!acceso) {
@@ -136,6 +134,7 @@ async function connectBot() {
 }
 
 connectBot();
+
 
 
 
