@@ -5,7 +5,10 @@ const P = require('pino');
 const qrcode = require('qrcode-terminal');
 const config = require('./config/config');
 
-const ADMIN_PRINCIPAL = '18294328201@s.whatsapp.net'; // Número nuevo del dueño
+// Lista de admins (puedes agregar más)
+const ADMINS = [
+    '18294328201@s.whatsapp.net'
+];
 
 async function connectBot() {
     const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
@@ -33,11 +36,8 @@ async function connectBot() {
     });
 
     sock.ev.on('creds.update', saveCreds);
-
-    // Activar saludos y despedidas 🔥
     require('./eventos/participantes')(sock);
 
-    // Cargar comandos automáticamente desde /comandos
     const comandos = {};
     const comandosDir = path.join(__dirname, 'comandos');
     readdirSync(comandosDir).forEach(file => {
@@ -45,18 +45,21 @@ async function connectBot() {
         comandos[nombre] = require(path.join(comandosDir, file));
     });
 
-    // Manejo de mensajes entrantes
     sock.ev.on('messages.upsert', async ({ messages }) => {
         const msg = messages[0];
         if (!msg.message || !msg.key.remoteJid) return;
 
         const from = msg.key.remoteJid;
         const isGroup = from.endsWith('@g.us');
-        const senderId = isGroup
-            ? msg.key.participant
-            : msg.key.remoteJid;
+        const senderId = isGroup ? msg.key.participant : msg.key.remoteJid;
 
         console.log('👤 senderId real:', senderId);
+
+        // Ignora direcciones anómalas como @lid
+        if (!senderId.endsWith('@s.whatsapp.net') && !senderId.endsWith('@g.us')) {
+            console.log(`⚠️ Sesión no válida: ${senderId}`);
+            return;
+        }
 
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
         if (!text.startsWith('.')) return;
@@ -64,10 +67,9 @@ async function connectBot() {
         const [comando, ...args] = text.trim().split(' ');
         const accion = comando.slice(1).toLowerCase();
 
-        // Comando especial: .activar
         if (accion === 'activar') {
-            if (senderId !== ADMIN_PRINCIPAL) {
-                await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede activar comandos 🔒' });
+            if (!ADMINS.includes(senderId)) {
+                await sock.sendMessage(from, { text: '🚫 Solo los dueños del bot pueden activar comandos 🔒' });
                 return;
             }
 
@@ -86,10 +88,9 @@ async function connectBot() {
             return;
         }
 
-        // Comando especial: .desactivar
         if (accion === 'desactivar') {
-            if (senderId !== ADMIN_PRINCIPAL) {
-                await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede desactivar comandos 🔒' });
+            if (!ADMINS.includes(senderId)) {
+                await sock.sendMessage(from, { text: '🚫 Solo los dueños del bot pueden desactivar comandos 🔒' });
                 return;
             }
 
@@ -108,7 +109,7 @@ async function connectBot() {
             return;
         }
 
-        // Comandos normales
+        // Comandos normales con control de acceso
         if (comandos[accion]) {
             const acceso = config.verificarAcceso(accion, from);
             if (!acceso) {
@@ -121,14 +122,11 @@ async function connectBot() {
                 console.log(`[CMD] .${accion} ejecutado por ${senderId}`);
             } catch (err) {
                 console.error(`[ERROR] al ejecutar .${accion}:`, err);
-                await sock.sendMessage(from, { text: '❌ Algo falló, pero no te apures, que seguimos rulay 🔧' });
-            }
-        }
-    });
-}
-
-connectBot();
-
+                if (err.message.includes('No sessions')) {
+                    console.log(`🔐 Usuario sin sesión válida: ${senderId}`);
+                    return;
+                }
+                await sock.sendMessage(from, { text: '❌ Algo falló, pero seguimos rulay 🔧' });
             }
         }
     });
