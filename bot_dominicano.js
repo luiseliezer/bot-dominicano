@@ -55,7 +55,7 @@ async function connectBot() {
 
         console.log('👤 senderId real:', senderId);
 
-        // ⛔ Filtrar sesiones inválidas
+        // ⛔ Filtrar sesiones inválidas (como @lid o @broadcast)
         if (!senderId.endsWith('@s.whatsapp.net') && !senderId.endsWith('@g.us')) {
             console.warn(`⛔ Sesión rechazada: ${senderId}`);
             return;
@@ -67,7 +67,7 @@ async function connectBot() {
         const [comando, ...args] = text.trim().split(' ');
         const accion = comando.slice(1).toLowerCase();
 
-        // 🔐 Activar comando
+        // 🔐 .activar
         if (accion === 'activar') {
             if (!ADMINS.includes(senderId)) {
                 await sock.sendMessage(from, { text: '🚫 Solo los dueños del bot pueden activar comandos 🔒' });
@@ -88,7 +88,7 @@ async function connectBot() {
             return;
         }
 
-        // 🔐 Desactivar comando
+        // 🔐 .desactivar
         if (accion === 'desactivar') {
             if (!ADMINS.includes(senderId)) {
                 await sock.sendMessage(from, { text: '🚫 Solo los dueños del bot pueden desactivar comandos 🔒' });
@@ -96,7 +96,7 @@ async function connectBot() {
             }
 
             if (!args[0]) {
-                await sock.sendMessage(from, { text: '❗ Escribe el comando a desactivar. Ej: .desactivar play' });
+                await sock.sendMessage(from, { text: '❗ Escribe el comando a desactivar. Ej: .desactivar chill' });
                 return;
             }
 
@@ -109,7 +109,7 @@ async function connectBot() {
             return;
         }
 
-        // ▶️ Ejecutar comando si está activo y accesible
+        // ▶️ Comandos normales
         if (comandos[accion]) {
             const acceso = config.verificarAcceso(accion, from);
             if (!acceso) {
@@ -124,7 +124,6 @@ async function connectBot() {
                 if (
                     err.message.includes('not-acceptable') ||
                     err.message.includes('No sessions') ||
-                    err.message.includes('No session') ||
                     err.message.includes('Encryption')
                 ) {
                     console.warn(`⚠️ No se pudo responder a ${senderId}: sesión inválida.`);
@@ -137,6 +136,8 @@ async function connectBot() {
         }
     });
 }
+
+connectBot();
 
 connectBot();
 
