@@ -5,6 +5,8 @@ const P = require('pino');
 const qrcode = require('qrcode-terminal');
 const config = require('./config/config');
 
+const ADMIN_PRINCIPAL = '18294328201@s.whatsapp.net'; // Número nuevo del dueño
+
 async function connectBot() {
     const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
     const { version } = await fetchLatestBaileysVersion();
@@ -64,9 +66,7 @@ async function connectBot() {
 
         // Comando especial: .activar
         if (accion === 'activar') {
-            const admin = '18099297296@s.whatsapp.net';
-
-            if (senderId !== admin) {
+            if (senderId !== ADMIN_PRINCIPAL) {
                 await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede activar comandos 🔒' });
                 return;
             }
@@ -88,9 +88,7 @@ async function connectBot() {
 
         // Comando especial: .desactivar
         if (accion === 'desactivar') {
-            const admin = '18099297296@s.whatsapp.net';
-
-            if (senderId !== admin) {
+            if (senderId !== ADMIN_PRINCIPAL) {
                 await sock.sendMessage(from, { text: '🚫 Solo el dueño del bot puede desactivar comandos 🔒' });
                 return;
             }
@@ -124,6 +122,13 @@ async function connectBot() {
             } catch (err) {
                 console.error(`[ERROR] al ejecutar .${accion}:`, err);
                 await sock.sendMessage(from, { text: '❌ Algo falló, pero no te apures, que seguimos rulay 🔧' });
+            }
+        }
+    });
+}
+
+connectBot();
+
             }
         }
     });
