@@ -121,7 +121,12 @@ async function connectBot() {
                 await comandos[accion](sock, msg, from, senderId, args);
                 console.log(`[CMD] .${accion} ejecutado por ${senderId}`);
             } catch (err) {
-                if (err.message.includes('not-acceptable') || err.message.includes('No sessions')) {
+                if (
+                    err.message.includes('not-acceptable') ||
+                    err.message.includes('No sessions') ||
+                    err.message.includes('No session') ||
+                    err.message.includes('Encryption')
+                ) {
                     console.warn(`⚠️ No se pudo responder a ${senderId}: sesión inválida.`);
                     return;
                 }
@@ -134,6 +139,7 @@ async function connectBot() {
 }
 
 connectBot();
+
 
 
 
