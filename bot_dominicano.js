@@ -5,7 +5,7 @@ const P = require('pino');
 const qrcode = require('qrcode-terminal');
 const config = require('./config/config');
 
-// Lista de admins (puedes agregar más)
+// ✅ Lista de administradores autorizados
 const ADMINS = [
     '18294328201@s.whatsapp.net'
 ];
@@ -55,9 +55,9 @@ async function connectBot() {
 
         console.log('👤 senderId real:', senderId);
 
-        // Ignora direcciones anómalas como @lid
+        // 🔒 Ignorar mensajes de IDs no válidos (como @lid)
         if (!senderId.endsWith('@s.whatsapp.net') && !senderId.endsWith('@g.us')) {
-            console.log(`⚠️ Sesión no válida: ${senderId}`);
+            console.log(`⚠️ Ignorado por sesión inválida: ${senderId}`);
             return;
         }
 
@@ -67,6 +67,7 @@ async function connectBot() {
         const [comando, ...args] = text.trim().split(' ');
         const accion = comando.slice(1).toLowerCase();
 
+        // 🔐 .activar comando
         if (accion === 'activar') {
             if (!ADMINS.includes(senderId)) {
                 await sock.sendMessage(from, { text: '🚫 Solo los dueños del bot pueden activar comandos 🔒' });
@@ -88,6 +89,7 @@ async function connectBot() {
             return;
         }
 
+        // 🔐 .desactivar comando
         if (accion === 'desactivar') {
             if (!ADMINS.includes(senderId)) {
                 await sock.sendMessage(from, { text: '🚫 Solo los dueños del bot pueden desactivar comandos 🔒' });
@@ -109,7 +111,7 @@ async function connectBot() {
             return;
         }
 
-        // Comandos normales con control de acceso
+        // 🧠 Comandos normales con acceso validado
         if (comandos[accion]) {
             const acceso = config.verificarAcceso(accion, from);
             if (!acceso) {
@@ -121,17 +123,19 @@ async function connectBot() {
                 await comandos[accion](sock, msg, from, senderId, args);
                 console.log(`[CMD] .${accion} ejecutado por ${senderId}`);
             } catch (err) {
-                console.error(`[ERROR] al ejecutar .${accion}:`, err);
-                if (err.message.includes('No sessions')) {
-                    console.log(`🔐 Usuario sin sesión válida: ${senderId}`);
+                if (err.message.includes('not-acceptable') || err.message.includes('No sessions')) {
+                    console.warn(`⚠️ No se pudo responder a ${senderId}: sesión inválida.`);
                     return;
                 }
-                await sock.sendMessage(from, { text: '❌ Algo falló, pero seguimos rulay 🔧' });
+
+                console.error(`[ERROR] al ejecutar .${accion}:`, err);
+                await sock.sendMessage(from, { text: '❌ Falló el comando, pero el bot sigue rulay 🔧' });
             }
         }
     });
 }
 
 connectBot();
+
 
 
